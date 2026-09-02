@@ -1,12 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sistema>
-  <estudiante matricula="zS22010001">
-    <nombre>Estudiante Ejemplo</nombre>
+  <estudiante>
+    <matricula>S24013375</matricula>
+    <nombre>Dana Carmona Santamaria</nombre>
     <materias>
-      <materia id="1">
+      <materia>
+        <id>1</id>
+        <nombre>Desarrolo Web</nombre>
+        <creditos>8</creditos>
+        <calificacion>8</calificacion>
+      </materia>
+      <materia>
+        <id>2</id>
+        <nombre>Principios de Ciberseguridad</nombre>
+        <creditos>9</creditos>
+        <calificacion>10</calificacion>
+      </materia>
+      <materia>
+        <id>3</id>
         <nombre>Liderazgo y emprendimiento</nombre>
         <creditos>6</creditos>
-        <calificacion>90</calificacion>
+        <calificacion>10</calificacion>
+      </materia>
+    </materias>
+  </estudiante>
+  <estudiante>
+    <matricula>B00999999</matricula>
+    <nombre>Estudiante de Prueba</nombre>
+    <materias>
+      <materia>
+        <id>1</id>
+        <nombre>Física</nombre>
+        <creditos>6</creditos>
       </materia>
     </materias>
   </estudiante>
