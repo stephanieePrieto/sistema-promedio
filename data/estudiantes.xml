@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sistema>
+  <estudiante matricula="zS22010001">
+    <nombre>Estudiante Ejemplo</nombre>
+    <materias>
+      <materia id="1">
+        <nombre>Liderazgo y emprendimiento</nombre>
+        <creditos>6</creditos>
+        <calificacion>90</calificacion>
+      </materia>
+    </materias>
+  </estudiante>
+</sistema>
