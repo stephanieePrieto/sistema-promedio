@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <!-- Bloque 1, sistema-->
+    <xs:element name="sistema">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- Bloque 2 estudiante-->
+                 <xs:element name="estudiante" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="matricula" type="matriculaType"/>
+                            <xs:element name="nombre" type="xs:string"/>
+                            <!-- Bloque 3 materias-->
+                            <xs:element name="materias">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <!-- Bloque 4 materia-->
+                                        <xs:element name="materia" maxOccurs="unbounded">
+                                            <xs:complexType>
+                                                <xs:sequence>
+                                                    <xs:element name="id"/>
+                                                    <xs:element name="nombre" type="nombreMateriaType"/>
+                                                    <xs:element name="creditos" type="creditosType"/>
+                                                    <xs:element name="calificacion" type="calificacionType"/>
+                                                </xs:sequence>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                 </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:simpleType name="matriculaType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="nombreMateriaType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="creditosType">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="25"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="calificacionType">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0.0"/>
+            <xs:maxInclusive value="100.0"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

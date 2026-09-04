@@ -32,6 +32,7 @@
         <id>1</id>
         <nombre>Física</nombre>
         <creditos>6</creditos>
+        <calificacion>7</calificacion>
       </materia>
     </materias>
   </estudiante>
