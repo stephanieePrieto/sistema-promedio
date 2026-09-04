@@ -22,7 +22,7 @@
                                                     <xs:element name="id"/>
                                                     <xs:element name="nombre" type="nombreMateriaType"/>
                                                     <xs:element name="creditos" type="creditosType"/>
-                                                    <xs:element name="calificacion" type="calificacionType"/>
+                                                    <xs:element name="calificacion" type="calificacionType" minOccurs="0"/>
                                                 </xs:sequence>
                                             </xs:complexType>
                                         </xs:element>
