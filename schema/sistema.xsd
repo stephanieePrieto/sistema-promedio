@@ -57,8 +57,8 @@
 
     <xs:simpleType name="calificacionType">
         <xs:restriction base="xs:decimal">
-            <xs:minInclusive value="0.0"/>
-            <xs:maxInclusive value="100.0"/>
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="10"/>
         </xs:restriction>
     </xs:simpleType>
 </xs:schema>
