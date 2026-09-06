@@ -8,7 +8,10 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Servidor base funcionando correctamente');
 });
-
+/*Esto es pa probarlo, ignorar
+const calificacionesRoutes = require('../routes/calificaciones');
+app.use('/alumnos', calificacionesRoutes);
+*/
 app.listen(PORT, () => {
   console.log(`Servidor activo en http://localhost:${PORT}`);
 });
