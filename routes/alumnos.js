@@ -13,9 +13,12 @@ router.get('/:matricula', async (req, res) => {
 
     if (!estudiante) {
       return res.status(404).send(`
+        <link rel="stylesheet" href="/style.css">
         <div class="card">
           <p class="error">Estudiante con matrícula "${matricula}" no encontrado.</p>
-          <a href="/" class="btn btn-generar">Regresar</a>
+          <div class="acciones">
+            <a href="/" class="btn btn-generar">Regresar</a>
+          </div>
         </div>
       `);
     }
@@ -25,8 +28,14 @@ router.get('/:matricula', async (req, res) => {
       <div class="card">
         <h1>Perfil de Estudiante</h1>
         <div class="datos-alumno">
-          <p><strong>Matrícula:</strong> ${estudiante.matricula}</p>
-          <p><strong>Nombre:</strong> ${estudiante.nombre}</p>
+          <div>
+            <label>Matrícula</label>
+            <input type="text" value="${estudiante.matricula}" disabled />
+          </div>
+          <div>
+            <label>Nombre</label>
+            <input type="text" value="${estudiante.nombre}" disabled />
+          </div>
         </div>
 
         <h2>Materias Registradas (${estudiante.materias.length})</h2>
@@ -55,17 +64,22 @@ router.get('/:matricula', async (req, res) => {
           }
         </div>
 
-        <div class="acciones" style="gap: 12px; margin-top: 24px;">
+        <div class="acciones">
           <a href="/alumnos/${estudiante.matricula}/editar" class="btn btn-generar">Editar Datos</a>
-          <form action="/alumnos/${estudiante.matricula}/eliminar" method="POST" style="margin: 0;" onsubmit="return confirm('¿Seguro que deseas eliminar este estudiante y todas sus materias?');">
-            <button type="submit" class="btn" style="background: #fbe9e9; border-color: #e3a4a4; color: #9a1c1c;">Eliminar Estudiante</button>
+          <form action="/alumnos/${estudiante.matricula}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este estudiante y todas sus materias?');">
+            <button type="submit" class="btn error">Eliminar Estudiante</button>
           </form>
-          <a href="/" class="btn" style="background: #e5e5e5; text-decoration: none; color: inherit;">Inicio</a>
+          <a href="/" class="btn">Inicio</a>
         </div>
       </div>
     `);
   } catch (error) {
-    res.status(500).send(`<p class="error">Error en el servidor: ${error.message}</p>`);
+    res.status(500).send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <p class="error">Error en el servidor: ${error.message}</p>
+      </div>
+    `);
   }
 });
 
@@ -79,7 +93,12 @@ router.get('/:matricula/editar', async (req, res) => {
     );
 
     if (!estudiante) {
-      return res.status(404).send('<p class="error">Estudiante no encontrado.</p>');
+      return res.status(404).send(`
+        <link rel="stylesheet" href="/style.css">
+        <div class="card">
+          <p class="error">Estudiante no encontrado.</p>
+        </div>
+      `);
     }
 
     res.send(`
@@ -87,23 +106,30 @@ router.get('/:matricula/editar', async (req, res) => {
       <div class="card">
         <h1>Editar Estudiante</h1>
         <form action="/alumnos/${estudiante.matricula}/editar" method="POST">
-          <div style="margin-bottom: 16px;">
-            <label>Matrícula (No modificable):</label>
-            <input type="text" value="${estudiante.matricula}" disabled />
+          <div class="datos-alumno">
+            <div>
+              <label>Matrícula (No modificable):</label>
+              <input type="text" value="${estudiante.matricula}" disabled />
+            </div>
+            <div>
+              <label>Nombre Completo:</label>
+              <input type="text" name="nombre" value="${estudiante.nombre}" required />
+            </div>
           </div>
-          <div style="margin-bottom: 24px;">
-            <label>Nombre Completo:</label>
-            <input type="text" name="nombre" value="${estudiante.nombre}" required />
-          </div>
-          <div class="acciones" style="gap: 12px;">
+          <div class="acciones">
             <button type="submit" class="btn btn-calcular">Guardar Cambios</button>
-            <a href="/alumnos/${estudiante.matricula}" class="btn" style="background: #e5e5e5; text-decoration: none; color: inherit;">Cancelar</a>
+            <a href="/alumnos/${estudiante.matricula}" class="btn">Cancelar</a>
           </div>
         </form>
       </div>
     `);
   } catch (error) {
-    res.status(500).send(`<p class="error">Error en el servidor: ${error.message}</p>`);
+    res.status(500).send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <p class="error">Error en el servidor: ${error.message}</p>
+      </div>
+    `);
   }
 });
 
@@ -114,7 +140,15 @@ router.post('/:matricula/editar', async (req, res) => {
     const { nombre } = req.body;
 
     if (!nombre || nombre.trim() === '') {
-      return res.status(400).send('<p class="error">El nombre no puede estar vacío.</p>');
+      return res.status(400).send(`
+        <link rel="stylesheet" href="/style.css">
+        <div class="card">
+          <p class="error">El nombre no puede estar vacío.</p>
+          <div class="acciones">
+            <a href="/alumnos/${matricula}/editar" class="btn btn-generar">Volver a intentar</a>
+          </div>
+        </div>
+      `);
     }
 
     const datos = await obtenerDatos();
@@ -123,18 +157,25 @@ router.post('/:matricula/editar', async (req, res) => {
     );
 
     if (!estudiante) {
-      return res.status(404).send('<p class="error">Estudiante no encontrado.</p>');
+      return res.status(404).send(`
+        <link rel="stylesheet" href="/style.css">
+        <div class="card">
+          <p class="error">Estudiante no encontrado.</p>
+        </div>
+      `);
     }
 
-    // Actualizamos el nombre
     estudiante.nombre = nombre.trim();
-
-    // Guardamos y validamos contra el XSD mediante xmlManager
     await guardarDatos(datos);
 
     res.redirect(`/alumnos/${matricula}`);
   } catch (error) {
-    res.status(500).send(`<p class="error">Error al actualizar: ${error.message}</p>`);
+    res.status(500).send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <p class="error">Error al actualizar: ${error.message}</p>
+      </div>
+    `);
   }
 });
 
@@ -149,26 +190,34 @@ router.post('/:matricula/eliminar', async (req, res) => {
     );
 
     if (indice === -1) {
-      return res.status(404).send('<p class="error">Estudiante no encontrado para eliminar.</p>');
+      return res.status(404).send(`
+        <link rel="stylesheet" href="/style.css">
+        <div class="card">
+          <p class="error">Estudiante no encontrado para eliminar.</p>
+        </div>
+      `);
     }
 
-    // Eliminamos al estudiante y automáticamente a sus materias hijas
     datos.estudiantes.splice(indice, 1);
-
     await guardarDatos(datos);
 
     res.send(`
       <link rel="stylesheet" href="/style.css">
-      <div class="card" style="text-align: center;">
-        <h1 style="color: #9a1c1c;">Estudiante Eliminado</h1>
-        <p>El registro de la matrícula <strong>${matricula}</strong> fue removido con éxito del XML.</p>
+      <div class="card">
+        <h1>Estudiante Eliminado</h1>
+        <p class="error">El registro de la matrícula ${matricula} fue removido con éxito del XML.</p>
         <div class="acciones">
           <a href="/" class="btn btn-generar">Volver al Inicio</a>
         </div>
       </div>
     `);
   } catch (error) {
-    res.status(500).send(`<p class="error">Error al eliminar: ${error.message}</p>`);
+    res.status(500).send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <p class="error">Error al eliminar: ${error.message}</p>
+      </div>
+    `);
   }
 });
 
