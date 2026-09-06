@@ -8,10 +8,10 @@ const XML_PATH = path.join(__dirname, '..', 'data', 'estudiantes.xml');
 
 let validarXML;
 try {
-  ({ validarXML } = require('./validator'));
+  ({ validarXML } = require('./validador'));
 } catch (err) {
   console.warn(
-    '[xmlManager] Aviso: no se encontró services/validator.js. ' +
+    '[xmlManager] Aviso: no se encontró services/validador.js. ' +
     'Usando validación temporal (siempre "válida") hasta que el Integrante 1 suba su archivo.'
   );
   validarXML = () => ({ valido: true });
