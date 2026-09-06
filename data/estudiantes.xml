@@ -6,32 +6,32 @@
     <materias>
       <materia>
         <id>1</id>
-        <nombre>Desarrolo Web</nombre>
+        <nombre>Desarrollo Web</nombre>
         <creditos>8</creditos>
-        <calificacion>8</calificacion>
+        <calificacion>80.0</calificacion>
       </materia>
       <materia>
         <id>2</id>
         <nombre>Principios de Ciberseguridad</nombre>
         <creditos>9</creditos>
-        <calificacion>10</calificacion>
+        <calificacion>100.0</calificacion>
       </materia>
       <materia>
         <id>3</id>
         <nombre>Liderazgo y emprendimiento</nombre>
         <creditos>6</creditos>
-        <calificacion>10</calificacion>
+        <calificacion>100.0</calificacion>
       </materia>
     </materias>
   </estudiante>
   <estudiante>
-    <matricula>B00999999</matricula>
+    <matricula>S22019999</matricula>
     <nombre>Estudiante de Prueba</nombre>
     <materias>
       <materia>
         <id>1</id>
-        <nombre>Física</nombre>
-        <creditos>6</creditos>
+        <nombre>Administración de bases de datos</nombre>
+        <creditos>8</creditos>
       </materia>
     </materias>
   </estudiante>
