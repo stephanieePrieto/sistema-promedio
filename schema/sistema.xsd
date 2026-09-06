@@ -6,7 +6,7 @@
         <xs:complexType>
             <xs:sequence>
                 <!-- Bloque 2 estudiante-->
-                 <xs:element name="estudiante" maxOccurs="unbounded">
+                <xs:element name="estudiante" minOccurs="0" maxOccurs="unbounded">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element name="matricula" type="matriculaType"/>
@@ -16,10 +16,10 @@
                                 <xs:complexType>
                                     <xs:sequence>
                                         <!-- Bloque 4 materia-->
-                                        <xs:element name="materia" maxOccurs="unbounded">
+                                        <xs:element name="materia" minOccurs="0" maxOccurs="unbounded">
                                             <xs:complexType>
                                                 <xs:sequence>
-                                                    <xs:element name="id"/>
+                                                    <xs:element name="id" type="xs:integer"/>
                                                     <xs:element name="nombre" type="nombreMateriaType"/>
                                                     <xs:element name="creditos" type="creditosType"/>
                                                     <xs:element name="calificacion" type="calificacionType" minOccurs="0"/>
@@ -31,14 +31,15 @@
                             </xs:element>
                         </xs:sequence>
                     </xs:complexType>
-                 </xs:element>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
     
+    <!-- Matrícula: S o s + año (00 a 26) + 6 dígitos -->
     <xs:simpleType name="matriculaType">
         <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z0-9]+"/>
+            <xs:pattern value="[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -55,10 +56,11 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <!-- Calificación en escala de 0 a 100 -->
     <xs:simpleType name="calificacionType">
         <xs:restriction base="xs:decimal">
             <xs:minInclusive value="0"/>
-            <xs:maxInclusive value="10"/>
+            <xs:maxInclusive value="100"/>
         </xs:restriction>
     </xs:simpleType>
 </xs:schema>
