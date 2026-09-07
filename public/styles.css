@@ -11,6 +11,9 @@
     --teal-bg: #e1f5ee;
     --teal-border: #0f6e56;
     --teal-texto: #085041;
+    --ambar-bg: #fdf3d9;
+    --ambar-border: #a4720a;
+    --ambar-texto: #7a5901;
 }
 
 * { box-sizing: border-box; }
@@ -187,6 +190,47 @@ input[type="number"] {
 
 #promedioGeneral {
     font-size: 18px;
+}
+
+.btn-secundario {
+    background: #fff;
+    border-color: var(--border-strong);
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.badge-aprobado {
+    background: var(--verde-bg);
+    border-color: var(--verde-border);
+    color: var(--verde-texto);
+}
+
+.badge-riesgo {
+    background: var(--ambar-bg);
+    border-color: var(--ambar-border);
+    color: var(--ambar-texto);
+}
+
+.badge-reprobado {
+    background: #fbe9e9;
+    border-color: #e3a4a4;
+    color: #9a1c1c;
+}
+
+.badge-pendiente {
+    background: var(--surface-1);
+    border-color: var(--border-strong);
+    color: var(--text-muted);
 }
 
 @media (max-width: 640px) {
