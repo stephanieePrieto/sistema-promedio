@@ -56,11 +56,11 @@
         </xs:restriction>
     </xs:simpleType>
 
-    <!-- Calificación en escala de 0 a 100 -->
-    <xs:simpleType name="calificacionType">
-        <xs:restriction base="xs:decimal">
-            <xs:minInclusive value="0"/>
-            <xs:maxInclusive value="100"/>
-        </xs:restriction>
-    </xs:simpleType>
+<!-- Calificación estricta en enteros de 0 a 100 -->
+<xs:simpleType name="calificacionType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="100"/>
+    </xs:restriction>
+</xs:simpleType>
 </xs:schema>

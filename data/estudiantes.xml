@@ -36,4 +36,28 @@
       </materia>
     </materias>
   </estudiante>
+  <estudiante>
+    <matricula>S24013327</matricula>
+    <nombre>Hernández Prieto Stephanie Elizdeth</nombre>
+    <materias>
+      <materia>
+        <id>1</id>
+        <nombre>Networking</nombre>
+        <creditos>9</creditos>
+        <calificacion>90</calificacion>
+      </materia>
+      <materia>
+        <id>2</id>
+        <nombre>Administración de Bases de Datos</nombre>
+        <creditos>9</creditos>
+        <calificacion>90</calificacion>
+      </materia>
+      <materia>
+        <id>3</id>
+        <nombre>Ciberseguridad</nombre>
+        <creditos>8</creditos>
+        <calificacion>85</calificacion>
+      </materia>
+    </materias>
+  </estudiante>
 </sistema>
