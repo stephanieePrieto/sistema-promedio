@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+  Archivo de persistencia de datos del sistema escolar.
+  Estructura validada contra el esquema schema/sistema.xsd.
+  Reglas:
+    - matricula: S o s, dos dígitos para el año (00 a 26) y 6 dígitos numéricos.
+    - creditos: enteros entre 1 y 25.
+    - calificacion: entero opcional entre 0 y 100.
+-->
 <sistema>
+  <!-- Registro de estudiante 1 -->
   <estudiante>
     <matricula>S24013375</matricula>
     <nombre>Dana Carmona Santamaria</nombre>
@@ -24,6 +33,8 @@
       </materia>
     </materias>
   </estudiante>
+
+  <!-- Registro de estudiante 2 -->
   <estudiante>
     <matricula>S24013327</matricula>
     <nombre>Hernández Prieto Stephanie Elizdeth</nombre>

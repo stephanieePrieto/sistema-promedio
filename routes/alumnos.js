@@ -1,13 +1,29 @@
+'use strict';
+
+/**
+ * @fileoverview Enrutador Express para operaciones del ciclo de vida del estudiante
+ * Gestiona el catálogo general, registro de nuevo ingreso, panel del alumno y bajas.
+ * @module routes/alumnos
+ */
+
 const express = require('express');
 const router = express.Router();
 const { obtenerDatos, guardarDatos } = require('../services/xmlManager');
 
-// 1. Panel interactivo del estudiante
+/**
+ * Muestra el panel interactivo del estudiante con sus materias inscritas y acciones disponibles.
+ * @name GET/:matricula/panel
+ * @function
+ * @param {express.Request} req - Parámetros de ruta: { matricula: string }.
+ * @param {express.Response} res - Interfaz HTML del panel.
+ */
 router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
   try {
     const { matricula } = req.params;
     const datos = await obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
     if (!estudiante) {
       return res.status(404).send(`
@@ -45,12 +61,18 @@ router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
           ${
             estudiante.materias.length === 0
               ? '<div class="vacio">No hay materias inscritas. Haz clic en "+ Inscribir Materia" para registrar una.</div>'
-              : estudiante.materias.map(m => `
+              : estudiante.materias
+                  .map(
+                    (m) => `
                 <div class="fila-materia" style="grid-template-columns: 0.6fr 1.6fr 0.8fr 1fr 1.6fr;">
                   <span>#${m.id}</span>
                   <span><strong>${m.nombre}</strong></span>
                   <span>${m.creditos} cr.</span>
-                  <span>${m.calificacion !== null && m.calificacion !== undefined ? m.calificacion : '<em>Pendiente</em>'}</span>
+                  <span>${
+                    m.calificacion !== null && m.calificacion !== undefined
+                      ? m.calificacion
+                      : '<em>Pendiente</em>'
+                  }</span>
                   <div style="display: flex; gap: 6px; justify-content: flex-end;">
                     <a href="/alumnos/${estudiante.matricula}/materias/${m.id}/editar" class="btn btn-secundario" style="padding: 4px 8px; font-size: 12px;">Editar</a>
                     ${
@@ -65,7 +87,9 @@ router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
                     </form>
                   </div>
                 </div>
-              `).join('')
+              `
+                  )
+                  .join('')
           }
         </div>
 
@@ -85,7 +109,13 @@ router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
   }
 });
 
-// 2. Formulario de registro de alumno
+/**
+ * Sirve el formulario HTML para dar de alta a un nuevo estudiante.
+ * @name GET/nuevo
+ * @function
+ * @param {express.Request} req - Petición entrante.
+ * @param {express.Response} res - Formulario con validación regex para matrícula.
+ */
 router.get('/nuevo', (req, res) => {
   res.send(`
     <link rel="stylesheet" href="/style.css">
@@ -120,7 +150,13 @@ router.get('/nuevo', (req, res) => {
   `);
 });
 
-// 3. Procesamiento de alta
+/**
+ * Procesa el formulario de alta de alumno validando duplicados y formato en el XML.
+ * @name POST/
+ * @function
+ * @param {express.Request} req - Cuerpo con { matricula: string, nombre: string }.
+ * @param {express.Response} res - Redirección al panel del nuevo alumno o respuesta de error.
+ */
 router.post('/', async (req, res) => {
   try {
     const { matricula, nombre } = req.body;
@@ -132,13 +168,19 @@ router.post('/', async (req, res) => {
     const mat = matricula ? matricula.trim().toUpperCase() : '';
     const regexMatricula = /^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$/;
     if (!regexMatricula.test(mat)) {
-      throw new Error(`La matrícula "${matricula}" no es válida. Debe iniciar con S o s, tener un año entre 00 y 26, y 6 números (ej. S24013375).`);
+      throw new Error(
+        `La matrícula "${matricula}" no es válida. Debe iniciar con S o s, tener un año entre 00 y 26, y 6 números (ej. S24013375).`
+      );
     }
 
     const datos = await obtenerDatos();
-    const duplicada = datos.estudiantes.some(e => e.matricula.toUpperCase() === mat);
+    const duplicada = datos.estudiantes.some(
+      (e) => e.matricula.toUpperCase() === mat
+    );
     if (duplicada) {
-      throw new Error(`La matrícula ${mat} ya está registrada en el sistema. Ingrese una matrícula distinta.`);
+      throw new Error(
+        `La matrícula ${mat} ya está registrada en el sistema. Ingrese una matrícula distinta.`
+      );
     }
 
     datos.estudiantes.push({
@@ -164,17 +206,27 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 4. Catálogo general de alumnos
+/**
+ * Presenta la tabla general de estudiantes registrados y el número de materias inscritas.
+ * @name GET/
+ * @function
+ * @param {express.Request} req - Petición cliente.
+ * @param {express.Response} res - Vista HTML con listado completo.
+ */
 router.get('/', async (req, res) => {
   try {
     const datos = await obtenerDatos();
-    const filas = datos.estudiantes.map(e => `
+    const filas = datos.estudiantes
+      .map(
+        (e) => `
       <div class="fila-resultado">
         <div><a href="/alumnos/${e.matricula}/panel">${e.matricula}</a></div>
         <div>${e.nombre}</div>
         <div>${e.materias.length} materias</div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
 
     res.send(`
       <link rel="stylesheet" href="/style.css">
@@ -199,10 +251,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 5. Editar Alumno
+/**
+ * Formulario para editar el nombre completo de un estudiante.
+ * @name GET/:matricula/editar
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string }.
+ * @param {express.Response} res - Formulario con el nombre precargado.
+ */
 router.get('/:matricula/editar', async (req, res) => {
   const datos = await obtenerDatos();
-  const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === req.params.matricula.toUpperCase());
+  const estudiante = datos.estudiantes.find(
+    (e) => e.matricula.toUpperCase() === req.params.matricula.toUpperCase()
+  );
   if (!estudiante) return res.status(404).send('No encontrado');
 
   res.send(`
@@ -223,12 +283,23 @@ router.get('/:matricula/editar', async (req, res) => {
   `);
 });
 
+/**
+ * Procesa la actualización del nombre del estudiante en el XML.
+ * @name POST/:matricula/editar
+ * @function
+ * @param {express.Request} req - Cuerpo: { nombre: string }.
+ * @param {express.Response} res - Redirección al panel del estudiante.
+ */
 router.post('/:matricula/editar', async (req, res) => {
   try {
     const { nombre } = req.body;
-    if (!nombre || nombre.trim() === '') throw new Error('El nombre no puede quedar vacío.');
+    if (!nombre || nombre.trim() === '') {
+      throw new Error('El nombre no puede quedar vacío.');
+    }
     const datos = await obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === req.params.matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === req.params.matricula.toUpperCase()
+    );
     if (estudiante) {
       estudiante.nombre = nombre.trim();
       await guardarDatos(datos);
@@ -239,10 +310,18 @@ router.post('/:matricula/editar', async (req, res) => {
   }
 });
 
-// 6. Eliminar Alumno
+/**
+ * Ejecuta la baja lógica/física del estudiante y de todas sus materias en cascada en el XML.
+ * @name POST/:matricula/eliminar
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string }.
+ * @param {express.Response} res - Redirección al catálogo general de alumnos.
+ */
 router.post('/:matricula/eliminar', async (req, res) => {
   const datos = await obtenerDatos();
-  datos.estudiantes = datos.estudiantes.filter(e => e.matricula.toUpperCase() !== req.params.matricula.toUpperCase());
+  datos.estudiantes = datos.estudiantes.filter(
+    (e) => e.matricula.toUpperCase() !== req.params.matricula.toUpperCase()
+  );
   await guardarDatos(datos);
   res.redirect('/alumnos');
 });

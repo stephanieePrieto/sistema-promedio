@@ -1,11 +1,23 @@
 'use strict';
 
+/**
+ * @fileoverview Enrutador para la presentación de la boleta académica consolidada (Integrante 7).
+ * Integra cálculos de promedio ponderado, asignación de badges y renderizado de boleta.
+ * @module routes/reportes
+ */
+
 const express = require('express');
 const router = express.Router();
 
 const { obtenerDatos } = require('../services/xmlManager');
 const { calcularPromedio } = require('../services/calculations');
 
+/**
+ * Sanitiza cadenas de texto para prevenir inyecciones de código HTML (XSS).
+ *
+ * @param {string|number} texto - Valor crudo a sanitizar.
+ * @returns {string} Texto seguro para incrustar en plantillas HTML.
+ */
 function escaparHTML(texto) {
   return String(texto)
     .replace(/&/g, '&amp;')
@@ -14,6 +26,12 @@ function escaparHTML(texto) {
     .replace(/"/g, '&quot;');
 }
 
+/**
+ * Mapea el estado del alumno a las clases CSS de etiquetas visuales definidas en style.css.
+ *
+ * @param {string} estado - Estado devuelto por calcularPromedio ('Aprobado', 'En riesgo', etc.).
+ * @returns {string} Lista de nombres de clases CSS (ej. 'badge badge-aprobado').
+ */
 function claseBadge(estado) {
   const clases = {
     Aprobado: 'badge badge-aprobado',
@@ -24,6 +42,13 @@ function claseBadge(estado) {
   return clases[estado] || 'badge';
 }
 
+/**
+ * Envoltorio HTML base para homogeneizar la estructura visual y cargar style.css.
+ *
+ * @param {string} titulo - Contenido de la etiqueta <title>.
+ * @param {string} contenido - Fragmento HTML interno dentro del contenedor .card.
+ * @returns {string} Documento HTML5 completo.
+ */
 function paginaBase(titulo, contenido) {
   return `
     <!DOCTYPE html>
@@ -43,23 +68,34 @@ function paginaBase(titulo, contenido) {
   `;
 }
 
-// GET /alumnos/:matricula/boleta
+/**
+ * Genera la boleta académica oficial con desglose de materias, cálculo ponderado y badge de estatus.
+ * @name GET/alumnos/:matricula/boleta
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string }.
+ * @param {express.Response} res - Página HTML formal de la boleta.
+ */
 router.get('/alumnos/:matricula/boleta', async (req, res) => {
   const { matricula } = req.params;
 
   try {
     const { estudiantes } = await obtenerDatos();
-    const estudiante = estudiantes.find((e) => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
     if (!estudiante) {
       return res.status(404).send(
-        paginaBase('Alumno no encontrado', `
+        paginaBase(
+          'Alumno no encontrado',
+          `
           <h1>Alumno no encontrado</h1>
           <p class="error">No existe ningún estudiante con matrícula ${escaparHTML(matricula)}.</p>
           <div class="acciones">
             <a class="btn btn-secundario" href="/">Volver al inicio</a>
           </div>
-        `)
+        `
+        )
       );
     }
 
@@ -71,7 +107,11 @@ router.get('/alumnos/:matricula/boleta', async (req, res) => {
         <div class="fila-resultado">
           <div>${escaparHTML(m.nombre)}</div>
           <div>${m.creditos}</div>
-          <div>${m.calificacion !== null && m.calificacion !== undefined ? Number(m.calificacion).toFixed(1) : 'Pendiente'}</div>
+          <div>${
+            m.calificacion !== null && m.calificacion !== undefined
+              ? Number(m.calificacion).toFixed(1)
+              : 'Pendiente'
+          }</div>
         </div>
       `
       )
@@ -111,7 +151,7 @@ router.get('/alumnos/:matricula/boleta', async (req, res) => {
       </p>
 
       <div class="acciones">
-        <a class="btn btn-secundario" href="/alumnos/${escaparHTML(estudiante.matricula)}">Volver al perfil</a>
+        <a class="btn btn-secundario" href="/alumnos/${escaparHTML(estudiante.matricula)}/panel">Volver al panel</a>
       </div>
     `;
 

@@ -1,15 +1,33 @@
+'use strict';
+
+/**
+ * @fileoverview Enrutador para el control de materias y créditos por estudiante (Integrante 5).
+ * Valida límites institucionales (1 a 25 créditos) y persistencia XML.
+ * @module routes/materias
+ */
+
 const express = require('express');
 const router = express.Router();
 const xmlManager = require('../services/xmlManager');
 
-// 1. Formulario para dar de alta una nueva materia (GET)
+/**
+ * Muestra el formulario para inscribir una nueva materia en el nodo del estudiante.
+ * @name GET/:matricula/materias/nueva
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string }.
+ * @param {express.Response} res - Vista HTML para registrar materia.
+ */
 router.get('/:matricula/materias/nueva', async (req, res) => {
   try {
     const { matricula } = req.params;
     const datos = await xmlManager.obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
-    if (!estudiante) return res.status(404).send('<p class="error">Estudiante no encontrado.</p>');
+    if (!estudiante) {
+      return res.status(404).send('<p class="error">Estudiante no encontrado.</p>');
+    }
 
     res.send(`
       <link rel="stylesheet" href="/style.css">
@@ -40,7 +58,14 @@ router.get('/:matricula/materias/nueva', async (req, res) => {
   }
 });
 
-// 2. Procesar Alta de Materia con validaciones y excepciones (POST)
+/**
+ * Inserta una nueva materia calculando un identificador secuencial y validando créditos.
+ * @name POST/:matricula/materias
+ * @function
+ * @param {express.Request} req - Cuerpo: { nombre: string, creditos: string|number }.
+ * @param {express.Response} res - Redirección al panel del estudiante.
+ * @throws {Error} Si el nombre está vacío o los créditos quedan fuera de 1 a 25.
+ */
 router.post('/:matricula/materias', async (req, res) => {
   try {
     const { matricula } = req.params;
@@ -52,18 +77,23 @@ router.post('/:matricula/materias', async (req, res) => {
 
     const numCreditos = parseInt(creditos, 10);
     if (isNaN(numCreditos) || numCreditos < 1 || numCreditos > 25) {
-      throw new Error(`Los créditos ingresados (${creditos}) son inválidos. El valor debe ser un entero entre 1 y 25.`);
+      throw new Error(
+        `Los créditos ingresados (${creditos}) son inválidos. El valor debe ser un entero entre 1 y 25.`
+      );
     }
 
     const datos = await xmlManager.obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
-    if (!estudiante) throw new Error('Estudiante no encontrado en la base de datos.');
+    if (!estudiante) {
+      throw new Error('Estudiante no encontrado en la base de datos.');
+    }
 
-    // Calcular ID autoincrementable secuencial
     let nuevoId = 1;
     if (estudiante.materias.length > 0) {
-      nuevoId = Math.max(...estudiante.materias.map(m => m.id)) + 1;
+      nuevoId = Math.max(...estudiante.materias.map((m) => m.id)) + 1;
     }
 
     estudiante.materias.push({
@@ -90,16 +120,24 @@ router.post('/:matricula/materias', async (req, res) => {
   }
 });
 
-// 3. Formulario para Editar Materia y Créditos (GET)
+/**
+ * Sirve el formulario para modificar el nombre y los créditos de una materia inscrita.
+ * @name GET/:matricula/materias/:idMateria/editar
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string, idMateria: string }.
+ * @param {express.Response} res - Formulario con datos precargados de la materia.
+ */
 router.get('/:matricula/materias/:idMateria/editar', async (req, res) => {
   try {
     const { matricula, idMateria } = req.params;
     const datos = await xmlManager.obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
     if (!estudiante) return res.status(404).send('<p class="error">Estudiante no encontrado.</p>');
 
-    const materia = estudiante.materias.find(m => m.id === parseInt(idMateria, 10));
+    const materia = estudiante.materias.find((m) => m.id === parseInt(idMateria, 10));
     if (!materia) return res.status(404).send('<p class="error">Materia no encontrada.</p>');
 
     res.send(`
@@ -129,7 +167,13 @@ router.get('/:matricula/materias/:idMateria/editar', async (req, res) => {
   }
 });
 
-// 4. Procesar Edición de Materia y Créditos (POST)
+/**
+ * Actualiza los datos de la materia en el XML asegurando créditos dentro del rango 1 a 25.
+ * @name POST/:matricula/materias/:idMateria/editar
+ * @function
+ * @param {express.Request} req - Cuerpo: { nombre: string, creditos: string|number }.
+ * @param {express.Response} res - Redirección al panel del estudiante.
+ */
 router.post('/:matricula/materias/:idMateria/editar', async (req, res) => {
   try {
     const { matricula, idMateria } = req.params;
@@ -143,10 +187,12 @@ router.post('/:matricula/materias/:idMateria/editar', async (req, res) => {
     }
 
     const datos = await xmlManager.obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
     if (!estudiante) throw new Error('Estudiante no encontrado.');
 
-    const materia = estudiante.materias.find(m => m.id === parseInt(idMateria, 10));
+    const materia = estudiante.materias.find((m) => m.id === parseInt(idMateria, 10));
     if (!materia) throw new Error('Materia no encontrada para editar.');
 
     materia.nombre = nombre.trim();
@@ -168,16 +214,26 @@ router.post('/:matricula/materias/:idMateria/editar', async (req, res) => {
   }
 });
 
-// 5. Eliminar Materia (POST)
+/**
+ * Remueve una materia específica del nodo de materias del estudiante.
+ * @name POST/:matricula/materias/:idMateria/eliminar
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string, idMateria: string }.
+ * @param {express.Response} res - Redirección al panel del estudiante.
+ */
 router.post('/:matricula/materias/:idMateria/eliminar', async (req, res) => {
   try {
     const { matricula, idMateria } = req.params;
     const datos = await xmlManager.obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
     if (!estudiante) throw new Error('Estudiante no encontrado.');
 
-    estudiante.materias = estudiante.materias.filter(m => m.id !== parseInt(idMateria, 10));
+    estudiante.materias = estudiante.materias.filter(
+      (m) => m.id !== parseInt(idMateria, 10)
+    );
     await xmlManager.guardarDatos(datos);
 
     res.redirect(`/alumnos/${matricula}/panel`);
