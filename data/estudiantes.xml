@@ -25,18 +25,6 @@
     </materias>
   </estudiante>
   <estudiante>
-    <matricula>S22019999</matricula>
-    <nombre>Estudiante de Prueba</nombre>
-    <materias>
-      <materia>
-        <id>1</id>
-        <nombre>Administración de bases de datos</nombre>
-        <creditos>8</creditos>
-        <calificacion>70</calificacion>
-      </materia>
-    </materias>
-  </estudiante>
-  <estudiante>
     <matricula>S24013327</matricula>
     <nombre>Hernández Prieto Stephanie Elizdeth</nombre>
     <materias>
@@ -57,6 +45,12 @@
         <nombre>Ciberseguridad</nombre>
         <creditos>8</creditos>
         <calificacion>85</calificacion>
+      </materia>
+      <materia>
+        <id>4</id>
+        <nombre>Interfaces de Usuario</nombre>
+        <creditos>8</creditos>
+        <calificacion>75</calificacion>
       </materia>
     </materias>
   </estudiante>
