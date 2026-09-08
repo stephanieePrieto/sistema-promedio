@@ -2,7 +2,122 @@ const express = require('express');
 const router = express.Router();
 const { obtenerDatos, guardarDatos } = require('../services/xmlManager');
 
-// 1. Panel interactivo del estudiante
+
+// 1. Formulario de registro de alumno
+router.get('/nuevo', (req, res) => {
+  res.send(`
+    <link rel="stylesheet" href="/style.css">
+    <div class="card">
+      <h1>Registrar Nuevo Alumno</h1>
+      <form action="/alumnos" method="POST">
+        <div class="datos-alumno">
+          <div>
+            <label for="matricula">Matrícula:</label>
+            <input 
+              type="text" 
+              id="matricula" 
+              name="matricula" 
+              placeholder="Ej. S24013375" 
+              pattern="^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$" 
+              title="Debe iniciar con S o s, seguido de dos dígitos de año (00 a 26) y 6 dígitos numéricos."
+              required 
+            />
+            <small style="color: var(--text-muted); font-size: 12px;">Formato: S + Año (00-26) + 6 dígitos.</small>
+          </div>
+          <div>
+            <label for="nombre">Nombre Completo:</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Nombre y Apellidos" required />
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn btn-calcular">Guardar Alumno</button>
+          <a href="/alumnos" class="btn">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  `);
+});
+
+// 2. Catálogo general de alumnos
+router.get('/', async (req, res) => {
+  try {
+    const datos = await obtenerDatos();
+    const filas = datos.estudiantes.map(e => `
+      <div class="fila-resultado">
+        <div><a href="/alumnos/${e.matricula}/panel">${e.matricula}</a></div>
+        <div>${e.nombre}</div>
+        <div>${e.materias.length} materias</div>
+      </div>
+    `).join('');
+
+    res.send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <h1>Catálogo de Estudiantes</h1>
+        <div class="acciones">
+          <a href="/alumnos/nuevo" class="btn btn-generar">+ Nuevo Alumno</a>
+          <a href="/" class="btn">Inicio</a>
+        </div>
+        <div class="tabla-header resultados-header">
+          <div>Matrícula</div>
+          <div>Nombre</div>
+          <div>Materias Inscritas</div>
+        </div>
+        <div class="tabla-filas">
+          ${filas || '<div class="vacio">No hay estudiantes registrados.</div>'}
+        </div>
+      </div>
+    `);
+  } catch (err) {
+    res.status(500).send(`<p class="error">Error: ${err.message}</p>`);
+  }
+});
+
+// 3. Procesamiento de alta
+router.post('/', async (req, res) => {
+  try {
+    const { matricula, nombre } = req.body;
+
+    if (!nombre || nombre.trim() === '') {
+      throw new Error('El nombre completo es obligatorio.');
+    }
+
+    const mat = matricula ? matricula.trim().toUpperCase() : '';
+    const regexMatricula = /^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$/;
+    if (!regexMatricula.test(mat)) {
+      throw new Error(`La matrícula "${matricula}" no es válida. Debe iniciar con S o s, tener un año entre 00 y 26, y 6 números (ej. S24013375).`);
+    }
+
+    const datos = await obtenerDatos();
+    const duplicada = datos.estudiantes.some(e => e.matricula.toUpperCase() === mat);
+    if (duplicada) {
+      throw new Error(`La matrícula ${mat} ya está registrada en el sistema. Ingrese una matrícula distinta.`);
+    }
+
+    datos.estudiantes.push({
+      matricula: mat,
+      nombre: nombre.trim(),
+      materias: []
+    });
+
+    await guardarDatos(datos);
+    res.redirect(`/alumnos/${mat}/panel`);
+  } catch (error) {
+    res.status(400).send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <h1>Error en el Registro</h1>
+        <p class="error">${error.message}</p>
+        <div class="acciones">
+          <a href="/alumnos/nuevo" class="btn btn-generar">Volver a intentar</a>
+          <a href="/alumnos" class="btn">Catálogo</a>
+        </div>
+      </div>
+    `);
+  }
+});
+
+// 4. Panel interactivo del estudiante
 router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
   try {
     const { matricula } = req.params;
@@ -77,120 +192,6 @@ router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
             <button type="submit" class="btn error">Eliminar Alumno</button>
           </form>
           <a href="/alumnos" class="btn">Catálogo</a>
-        </div>
-      </div>
-    `);
-  } catch (err) {
-    res.status(500).send(`<p class="error">Error: ${err.message}</p>`);
-  }
-});
-
-// 2. Formulario de registro de alumno
-router.get('/nuevo', (req, res) => {
-  res.send(`
-    <link rel="stylesheet" href="/style.css">
-    <div class="card">
-      <h1>Registrar Nuevo Alumno</h1>
-      <form action="/alumnos" method="POST">
-        <div class="datos-alumno">
-          <div>
-            <label for="matricula">Matrícula:</label>
-            <input 
-              type="text" 
-              id="matricula" 
-              name="matricula" 
-              placeholder="Ej. S24013375" 
-              pattern="^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$" 
-              title="Debe iniciar con S o s, seguido de dos dígitos de año (00 a 26) y 6 dígitos numéricos."
-              required 
-            />
-            <small style="color: var(--text-muted); font-size: 12px;">Formato: S + Año (00-26) + 6 dígitos.</small>
-          </div>
-          <div>
-            <label for="nombre">Nombre Completo:</label>
-            <input type="text" id="nombre" name="nombre" placeholder="Nombre y Apellidos" required />
-          </div>
-        </div>
-        <div class="acciones">
-          <button type="submit" class="btn btn-calcular">Guardar Alumno</button>
-          <a href="/alumnos" class="btn">Cancelar</a>
-        </div>
-      </form>
-    </div>
-  `);
-});
-
-// 3. Procesamiento de alta
-router.post('/', async (req, res) => {
-  try {
-    const { matricula, nombre } = req.body;
-
-    if (!nombre || nombre.trim() === '') {
-      throw new Error('El nombre completo es obligatorio.');
-    }
-
-    const mat = matricula ? matricula.trim().toUpperCase() : '';
-    const regexMatricula = /^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$/;
-    if (!regexMatricula.test(mat)) {
-      throw new Error(`La matrícula "${matricula}" no es válida. Debe iniciar con S o s, tener un año entre 00 y 26, y 6 números (ej. S24013375).`);
-    }
-
-    const datos = await obtenerDatos();
-    const duplicada = datos.estudiantes.some(e => e.matricula.toUpperCase() === mat);
-    if (duplicada) {
-      throw new Error(`La matrícula ${mat} ya está registrada en el sistema. Ingrese una matrícula distinta.`);
-    }
-
-    datos.estudiantes.push({
-      matricula: mat,
-      nombre: nombre.trim(),
-      materias: []
-    });
-
-    await guardarDatos(datos);
-    res.redirect(`/alumnos/${mat}/panel`);
-  } catch (error) {
-    res.status(400).send(`
-      <link rel="stylesheet" href="/style.css">
-      <div class="card">
-        <h1>Error en el Registro</h1>
-        <p class="error">${error.message}</p>
-        <div class="acciones">
-          <a href="/alumnos/nuevo" class="btn btn-generar">Volver a intentar</a>
-          <a href="/alumnos" class="btn">Catálogo</a>
-        </div>
-      </div>
-    `);
-  }
-});
-
-// 4. Catálogo general de alumnos
-router.get('/', async (req, res) => {
-  try {
-    const datos = await obtenerDatos();
-    const filas = datos.estudiantes.map(e => `
-      <div class="fila-resultado">
-        <div><a href="/alumnos/${e.matricula}/panel">${e.matricula}</a></div>
-        <div>${e.nombre}</div>
-        <div>${e.materias.length} materias</div>
-      </div>
-    `).join('');
-
-    res.send(`
-      <link rel="stylesheet" href="/style.css">
-      <div class="card">
-        <h1>Catálogo de Estudiantes</h1>
-        <div class="acciones">
-          <a href="/alumnos/nuevo" class="btn btn-generar">+ Nuevo Alumno</a>
-          <a href="/" class="btn">Inicio</a>
-        </div>
-        <div class="tabla-header resultados-header">
-          <div>Matrícula</div>
-          <div>Nombre</div>
-          <div>Materias Inscritas</div>
-        </div>
-        <div class="tabla-filas">
-          ${filas || '<div class="vacio">No hay estudiantes registrados.</div>'}
         </div>
       </div>
     `);
