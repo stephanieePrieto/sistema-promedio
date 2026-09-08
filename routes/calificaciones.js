@@ -1,127 +1,329 @@
+'use strict';
+
+/**
+ * @fileoverview Enrutador Express para operaciones del ciclo de vida del estudiante (Integrantes 3 y 4).
+ * Gestiona el catálogo general, registro de nuevo ingreso, panel del alumno y bajas.
+ * @module routes/alumnos
+ */
+
 const express = require('express');
 const router = express.Router();
 const { obtenerDatos, guardarDatos } = require('../services/xmlManager');
 
-// GET /alumnos/:matricula/calificaciones
-router.get('/alumnos/:matricula/calificaciones', async (req, res) => {
+/**
+ * Muestra el panel interactivo del estudiante con sus materias inscritas y acciones disponibles.
+ * @name GET/:matricula/panel
+ * @function
+ * @param {express.Request} req - Parámetros de ruta: { matricula: string }.
+ * @param {express.Response} res - Interfaz HTML del panel.
+ */
+router.get(['/:matricula', '/:matricula/panel'], async (req, res) => {
   try {
     const { matricula } = req.params;
     const datos = await obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === matricula.toUpperCase()
+    );
 
     if (!estudiante) {
       return res.status(404).send(`
         <link rel="stylesheet" href="/style.css">
-        <div class="card"><p class="error">Alumno no encontrado.</p></div>
+        <div class="card">
+          <p class="error">Estudiante con matrícula "${matricula}" no encontrado.</p>
+          <div class="acciones"><a href="/" class="btn">Inicio</a></div>
+        </div>
       `);
     }
-
-    const filas = estudiante.materias.map(m => `
-      <div class="fila-materia">
-        <span><strong>${m.nombre}</strong> (${m.creditos} créditos)</span>
-        <div>
-          <input 
-            type="number" 
-            name="calif_${m.id}" 
-            min="0" 
-            max="100" 
-            step="1" 
-            value="${m.calificacion !== null && m.calificacion !== undefined ? m.calificacion : ''}" 
-            placeholder="0 - 100" 
-            style="width: 120px;"
-          />
-        </div>
-      </div>
-    `).join('');
 
     res.send(`
       <link rel="stylesheet" href="/style.css">
       <div class="card">
-        <h1>Capturar Calificaciones</h1>
-        <p>Alumno: <strong>${estudiante.nombre}</strong> (${estudiante.matricula})</p>
-        <p style="font-size: 13px; color: var(--text-secondary);">
-          * Ingrese números enteros entre <strong>0</strong> y <strong>100</strong> (sin decimales). Deje la casilla en blanco para marcar como "Pendiente".
-        </p>
+        <h1>Panel del Estudiante</h1>
+        <div class="datos-alumno">
+          <div><label>Matrícula</label><input type="text" value="${estudiante.matricula}" disabled /></div>
+          <div><label>Nombre Completo</label><input type="text" value="${estudiante.nombre}" disabled /></div>
+        </div>
 
-        <form action="/alumnos/${estudiante.matricula}/calificaciones" method="POST">
-          <div class="tabla-filas">
-            ${filas || '<div class="vacio">No hay materias registradas para calificar.</div>'}
-          </div>
-          <div class="acciones">
-            <button type="submit" class="btn btn-calcular">Guardar Notas</button>
-            <a href="/alumnos/${estudiante.matricula}/panel" class="btn">Cancelar</a>
-          </div>
-        </form>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
+          <h2 style="margin: 0;">Materias Registradas (${estudiante.materias.length})</h2>
+          <a href="/alumnos/${estudiante.matricula}/materias/nueva" class="btn btn-generar">+ Inscribir Materia</a>
+        </div>
+
+        <div class="tabla-header" style="grid-template-columns: 0.6fr 1.6fr 0.8fr 1fr 1.6fr; margin-top: 12px;">
+          <span>ID</span>
+          <span>Materia</span>
+          <span>Créditos</span>
+          <span>Calificación</span>
+          <span style="text-align: right;">Acciones</span>
+        </div>
+
+        <div class="tabla-filas">
+          ${
+            estudiante.materias.length === 0
+              ? '<div class="vacio">No hay materias inscritas. Haz clic en "+ Inscribir Materia" para registrar una.</div>'
+              : estudiante.materias
+                  .map(
+                    (m) => `
+                <div class="fila-materia" style="grid-template-columns: 0.6fr 1.6fr 0.8fr 1fr 1.6fr;">
+                  <span>#${m.id}</span>
+                  <span><strong>${m.nombre}</strong></span>
+                  <span>${m.creditos} cr.</span>
+                  <span>${
+                    m.calificacion !== null && m.calificacion !== undefined
+                      ? m.calificacion
+                      : '<em>Pendiente</em>'
+                  }</span>
+                  <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                    <a href="/alumnos/${estudiante.matricula}/materias/${m.id}/editar" class="btn btn-secundario" style="padding: 4px 8px; font-size: 12px;">Editar</a>
+                    ${
+                      m.calificacion !== null && m.calificacion !== undefined
+                        ? `<form action="/alumnos/${estudiante.matricula}/materias/${m.id}/quitar-calificacion" method="POST" style="margin:0;">
+                             <button type="submit" class="btn" style="padding: 4px 8px; font-size: 12px; background: #fdf3d9; border-color: #a4720a; color: #7a5901;">Quitar Nota</button>
+                           </form>`
+                        : ''
+                    }
+                    <form action="/alumnos/${estudiante.matricula}/materias/${m.id}/eliminar" method="POST" style="margin: 0;" onsubmit="return confirm('¿Eliminar esta materia?');">
+                      <button type="submit" class="btn error" style="padding: 4px 8px; font-size: 12px;">Baja</button>
+                    </form>
+                  </div>
+                </div>
+              `
+                  )
+                  .join('')
+          }
+        </div>
+
+        <div class="acciones" style="flex-wrap: wrap; gap: 10px; margin-top: 30px;">
+          <a href="/alumnos/${estudiante.matricula}/boleta" class="btn btn-calcular">Ver Boleta de Promedio</a>
+          <a href="/alumnos/${estudiante.matricula}/calificaciones" class="btn btn-generar">Capturar / Modificar Notas</a>
+          <a href="/alumnos/${estudiante.matricula}/editar" class="btn">Editar Nombre</a>
+          <form action="/alumnos/${estudiante.matricula}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas dar de baja este estudiante?');" style="margin: 0;">
+            <button type="submit" class="btn error">Eliminar Alumno</button>
+          </form>
+          <a href="/alumnos" class="btn">Catálogo</a>
+        </div>
       </div>
     `);
-  } catch (error) {
-    res.status(500).send(`<p class="error">Error: ${error.message}</p>`);
+  } catch (err) {
+    res.status(500).send(`<p class="error">Error: ${err.message}</p>`);
   }
 });
 
-// POST /alumnos/:matricula/calificaciones
-router.post('/alumnos/:matricula/calificaciones', async (req, res) => {
+/**
+ * Sirve el formulario HTML para dar de alta a un nuevo estudiante.
+ * @name GET/nuevo
+ * @function
+ * @param {express.Request} req - Petición entrante.
+ * @param {express.Response} res - Formulario con validación regex para matrícula.
+ */
+router.get('/nuevo', (req, res) => {
+  res.send(`
+    <link rel="stylesheet" href="/style.css">
+    <div class="card">
+      <h1>Registrar Nuevo Alumno</h1>
+      <form action="/alumnos" method="POST">
+        <div class="datos-alumno">
+          <div>
+            <label for="matricula">Matrícula:</label>
+            <input 
+              type="text" 
+              id="matricula" 
+              name="matricula" 
+              placeholder="Ej. S24013375" 
+              pattern="^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$" 
+              title="Debe iniciar con S o s, seguido de dos dígitos de año (00 a 26) y 6 dígitos numéricos."
+              required 
+            />
+            <small style="color: var(--text-muted); font-size: 12px;">Formato: S + Año (00-26) + 6 dígitos.</small>
+          </div>
+          <div>
+            <label for="nombre">Nombre Completo:</label>
+            <input type="text" id="nombre" name="nombre" placeholder="Nombre y Apellidos" required />
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn btn-calcular">Guardar Alumno</button>
+          <a href="/alumnos" class="btn">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  `);
+});
+
+/**
+ * Procesa el formulario de alta de alumno validando duplicados y formato en el XML.
+ * @name POST/
+ * @function
+ * @param {express.Request} req - Cuerpo con { matricula: string, nombre: string }.
+ * @param {express.Response} res - Redirección al panel del nuevo alumno o respuesta de error.
+ */
+router.post('/', async (req, res) => {
   try {
-    const { matricula } = req.params;
+    const { matricula, nombre } = req.body;
+
+    if (!nombre || nombre.trim() === '') {
+      throw new Error('El nombre completo es obligatorio.');
+    }
+
+    const mat = matricula ? matricula.trim().toUpperCase() : '';
+    const regexMatricula = /^[Ss](0[0-9]|1[0-9]|2[0-6])[0-9]{6}$/;
+    if (!regexMatricula.test(mat)) {
+      throw new Error(
+        `La matrícula "${matricula}" no es válida. Debe iniciar con S o s, tener un año entre 00 y 26, y 6 números (ej. S24013375).`
+      );
+    }
+
     const datos = await obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
+    const duplicada = datos.estudiantes.some(
+      (e) => e.matricula.toUpperCase() === mat
+    );
+    if (duplicada) {
+      throw new Error(
+        `La matrícula ${mat} ya está registrada en el sistema. Ingrese una matrícula distinta.`
+      );
+    }
 
-    if (!estudiante) throw new Error('Estudiante no encontrado.');
-
-    // Validar entero estricto antes de guardar
-    estudiante.materias.forEach(m => {
-      const valor = req.body[`calif_${m.id}`];
-      if (valor !== undefined && valor !== '') {
-        const texto = String(valor).trim();
-        
-        // Rechazar si contiene punto o coma decimal
-        if (texto.includes('.') || texto.includes(',')) {
-          throw new Error(`La calificación de "${m.nombre}" (${texto}) contiene decimales. Solo se aceptan calificaciones enteras (0 a 100).`);
-        }
-
-        const cal = parseInt(texto, 10);
-        if (isNaN(cal) || cal < 0 || cal > 100) {
-          throw new Error(`La calificación de "${m.nombre}" (${texto}) no es válida. Debe situarse entre 0 y 100.`);
-        }
-        m.calificacion = cal;
-      } else {
-        m.calificacion = null;
-      }
+    datos.estudiantes.push({
+      matricula: mat,
+      nombre: nombre.trim(),
+      materias: []
     });
 
     await guardarDatos(datos);
-    res.redirect(`/alumnos/${estudiante.matricula}/panel`);
+    res.redirect(`/alumnos/${mat}/panel`);
   } catch (error) {
     res.status(400).send(`
       <link rel="stylesheet" href="/style.css">
       <div class="card">
-        <h1>Error en Calificaciones</h1>
+        <h1>Error en el Registro</h1>
         <p class="error">${error.message}</p>
         <div class="acciones">
-          <a href="/alumnos/${req.params.matricula}/calificaciones" class="btn btn-generar">Corregir</a>
-          <a href="/alumnos/${req.params.matricula}/panel" class="btn">Volver al Panel</a>
+          <a href="/alumnos/nuevo" class="btn btn-generar">Volver a intentar</a>
+          <a href="/alumnos" class="btn">Catálogo</a>
         </div>
       </div>
     `);
   }
 });
 
-// Limpiar calificación
-router.post('/alumnos/:matricula/materias/:idMateria/quitar-calificacion', async (req, res) => {
+/**
+ * Presenta la tabla general de estudiantes registrados y el número de materias inscritas.
+ * @name GET/
+ * @function
+ * @param {express.Request} req - Petición cliente.
+ * @param {express.Response} res - Vista HTML con listado completo.
+ */
+router.get('/', async (req, res) => {
   try {
-    const { matricula, idMateria } = req.params;
     const datos = await obtenerDatos();
-    const estudiante = datos.estudiantes.find(e => e.matricula.toUpperCase() === matricula.toUpperCase());
-    if (!estudiante) throw new Error('Alumno no encontrado.');
+    const filas = datos.estudiantes
+      .map(
+        (e) => `
+      <div class="fila-resultado">
+        <div><a href="/alumnos/${e.matricula}/panel">${e.matricula}</a></div>
+        <div>${e.nombre}</div>
+        <div>${e.materias.length} materias</div>
+      </div>
+    `
+      )
+      .join('');
 
-    const materia = estudiante.materias.find(m => m.id === parseInt(idMateria, 10));
-    if (materia) materia.calificacion = null;
+    res.send(`
+      <link rel="stylesheet" href="/style.css">
+      <div class="card">
+        <h1>Catálogo de Estudiantes</h1>
+        <div class="acciones">
+          <a href="/alumnos/nuevo" class="btn btn-generar">+ Nuevo Alumno</a>
+          <a href="/" class="btn">Inicio</a>
+        </div>
+        <div class="tabla-header resultados-header">
+          <div>Matrícula</div>
+          <div>Nombre</div>
+          <div>Materias Inscritas</div>
+        </div>
+        <div class="tabla-filas">
+          ${filas || '<div class="vacio">No hay estudiantes registrados.</div>'}
+        </div>
+      </div>
+    `);
+  } catch (err) {
+    res.status(500).send(`<p class="error">Error: ${err.message}</p>`);
+  }
+});
 
-    await guardarDatos(datos);
-    res.redirect(`/alumnos/${matricula}/panel`);
+/**
+ * Formulario para editar el nombre completo de un estudiante.
+ * @name GET/:matricula/editar
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string }.
+ * @param {express.Response} res - Formulario con el nombre precargado.
+ */
+router.get('/:matricula/editar', async (req, res) => {
+  const datos = await obtenerDatos();
+  const estudiante = datos.estudiantes.find(
+    (e) => e.matricula.toUpperCase() === req.params.matricula.toUpperCase()
+  );
+  if (!estudiante) return res.status(404).send('No encontrado');
+
+  res.send(`
+    <link rel="stylesheet" href="/style.css">
+    <div class="card">
+      <h1>Editar Estudiante</h1>
+      <form action="/alumnos/${estudiante.matricula}/editar" method="POST">
+        <div class="datos-alumno">
+          <div><label>Matrícula</label><input type="text" value="${estudiante.matricula}" disabled /></div>
+          <div><label>Nombre Completo</label><input type="text" name="nombre" value="${estudiante.nombre}" required /></div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn btn-calcular">Guardar</button>
+          <a href="/alumnos/${estudiante.matricula}/panel" class="btn">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  `);
+});
+
+/**
+ * Procesa la actualización del nombre del estudiante en el XML.
+ * @name POST/:matricula/editar
+ * @function
+ * @param {express.Request} req - Cuerpo: { nombre: string }.
+ * @param {express.Response} res - Redirección al panel del estudiante.
+ */
+router.post('/:matricula/editar', async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    if (!nombre || nombre.trim() === '') {
+      throw new Error('El nombre no puede quedar vacío.');
+    }
+    const datos = await obtenerDatos();
+    const estudiante = datos.estudiantes.find(
+      (e) => e.matricula.toUpperCase() === req.params.matricula.toUpperCase()
+    );
+    if (estudiante) {
+      estudiante.nombre = nombre.trim();
+      await guardarDatos(datos);
+    }
+    res.redirect(`/alumnos/${req.params.matricula}/panel`);
   } catch (error) {
     res.status(400).send(`<p class="error">Error: ${error.message}</p>`);
   }
+});
+
+/**
+ * Ejecuta la baja lógica/física del estudiante y de todas sus materias en cascada en el XML.
+ * @name POST/:matricula/eliminar
+ * @function
+ * @param {express.Request} req - Parámetros: { matricula: string }.
+ * @param {express.Response} res - Redirección al catálogo general de alumnos.
+ */
+router.post('/:matricula/eliminar', async (req, res) => {
+  const datos = await obtenerDatos();
+  datos.estudiantes = datos.estudiantes.filter(
+    (e) => e.matricula.toUpperCase() !== req.params.matricula.toUpperCase()
+  );
+  await guardarDatos(datos);
+  res.redirect('/alumnos');
 });
 
 module.exports = router;
